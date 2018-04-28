@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.boco.app.dao.MeetingGroupDao">
+	  <resultMap type="MeetingGroup" id="MeetingGroupMap">
+		   <id property="id" column="id"/>
+		   <result property="creator" column="creator"/>
+		   <result property="createtime" column="create_time" />
+		   <result property="updatetime" column="update_time" />
+		   <result property="groupdesc" column="groupdesc" />
+		   <result property="name" column="name" />
+		   <result property="num" column="num" />
+		   <result property="conversation" column="conversation"/>
+	  </resultMap>
+	  
+	  <resultMap type="MeetingGroup" id="MeetingGroupUserMap" >
+	         <id property="id" column="id"/>
+	         <collection property="userList"  
+	         javaType="java.util.ArrayList"
+	         ofType="User"
+	         column="id"  
+	         select="findUserListByGroupId">
+	         </collection>
+	  </resultMap>
+	  
+	  <select id="findUserListByGroupId" parameterType="String" resultType="user" >   
+	         select * from t_user where id in(select user_id from t_meetinggroup_user where group_id=#{group_id})
+	  </select>
+	  
+	  <insert id="saveMeetingGroup" parameterType="MeetingGroup">
+	        insert into t_meetinggroup values (#{id},#{creator},#{createtime},#{updatetime},#{groupdesc},#{name},#{num},#{conversation})
+	  </insert>
+	  <!-- 查找会议信息 -->
+	  <select id="findMeetingGroup" parameterType="String" resultMap="MeetingGroupUserMap">   
+	         select * from t_meetinggroup where  id=#{id,jdbcType=VARCHAR}
+	  </select>
+	  
+	   <!-- 查找会议信息成员 -->
+	  <!-- <select id="findMeetingGroupUser" parameterType="String" resultMap="MeetingGroupUserMap">
+	          select g.id,g.creator,g.create_time,g.update_time,g.groupdesc,g.name,g.num,g.conversation,
+	                 u.id,u.nickname,u.session_id 
+	                 from t_meetinggroup g left join t_meetinggroup_user gu on g.id=gu.gruop_id
+	                 left join t_user u  on  gu.user_id=u.id where g.id=#{id}
+	  </select>  -->
+	  
+	  <!-- 群组移除成员 -->
+	  <!-- 删除组与组内成员之间的对应关系 -->  
+    <delete id="deleteGroupUser" parameterType="hashMap">  
+        delete from t_meetinggruop_user  
+        <where>  
+            <if test="user.id != null">user_id = #{userId}</if>  
+            <if test="group.id != null">and group_id = #{groupId}</if>  
+        </where>  
+    </delete> 
+    <!-- 删除会议组关联 -->
+     <delete id="deleteGroupRelativity" parameterType="String">  
+        delete from t_meetinggruop_user  where group_id=#{groupId}
+          
+    </delete> 
+    <!-- 删除会议组信息 -->
+    <delete id="deleteGroupInfo" parameterType="String">  
+       delete from t_meetinggroup  where  id=#{id}
+    </delete> 
+	  <!-- 根据id和创建者 查询会议组 -->
+	 <select id="findGroupByCreatorID" parameterType="hashMap" resultType="MeetingGroup" >
+	      select * from t_meetinggroup where id=#{id} and creator=#{creator}
+	 </select>
+	 
+	   <!-- 查询自己创建的会议组-->
+	 <select id="findGroupListByCreator" parameterType="String" resultType="MeetingGroup" >
+	      select * from t_meetinggroup where  creator=#{creator}
+	 </select>
+	 
+	  
+</mapper> 

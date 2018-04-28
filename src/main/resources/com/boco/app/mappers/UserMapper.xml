@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.boco.app.dao.UserDao">
+    
+    <resultMap type="User" id="UserMap">
+        <id property="id" column="id"/>
+        <result property="nickname" column="nickname"/>
+        <result property="sessionid" column="session_id"/>   
+    </resultMap>
+    
+    <resultMap type="User" id="UserMeetingGroupMap">
+     <id property="id" column="id"/>
+     <collection property="meetingGroupList"
+     javaType="java.util.ArrayList" 
+      ofType="MeetingGroup" 
+        column="id"  select="findGroupListByUserId" >	   
+     </collection>
+    </resultMap>
+    <!-- 通过用户id 查询用户会议群组 -->
+    <select id="findGroupListByUserId"  parameterType="String" resultType="MeetingGroup">
+          select * from t_meetinggroup  where id in (select group_id from t_meetinggroup_user where user_id =#{user_id}) 
+    </select>
+        <!-- 插入用户 -->
+    <insert id="saveUser" parameterType="User" >
+        insert into  T_USER  values(#{id},#{nickname},#{sessionid})     
+    </insert>
+         <!--  查找所有user信息-->
+        <select id="findAllUser"  resultType="User">
+           select * from  T_USER  
+        </select> 
+        
+        <!-- 通过userid 查找user信息 及群组-->
+        <select id="findUser" parameterType="User" resultMap="UserMeetingGroupMap" >
+           select * from  T_USER  where id=#{id} 
+        </select>
+        <!-- 通过id 查找user的基本信息 -->
+        <select id="findUserById" parameterType="String" resultType="User" >
+           select * from  T_USER  where id=#{id} 
+        </select>
+        
+        <!-- 通过Userid 查找user信息以及会议组信息 -->
+        <select id="findUserMeetingGroup" parameterType="String" resultMap="UserMeetingGroupMap">
+           select u.id as id,u.nickname as nick,u.session_id as sessionid,
+              g.id as id,g.creator as creator,g.create_time as createtime,g.update_time as updatetime,g.groupdesc as groupdesc,g.name as name,g.num as num,g.conversation as conversation
+              from  T_USER u left join T_MEETINGGROUP_USER  gu on  u.id=gu.user_id 
+              left join T_MEETINGGROUP g on gu.group_id=g.id 
+              where u.id=#{id}
+        </select>
+        
+        <!-- 保存关联关系 -->
+        <insert id="saveRelativity" parameterType="hashMap">
+              insert into T_MEETINGGROUP_USER values (#{userId},#{groupId})
+        </insert>
+        
+	<select id="login" parameterType="User1" resultType="User1">
+		select * from T_USER where userName=#{userName} and password=#{password}
+	</select>
+	
+	
+	
+</mapper> 
